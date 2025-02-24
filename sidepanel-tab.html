@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Comment Section</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<style>
+  #open{
+    display: none;
+  }
+</style>
+<body>
+  <div class="container" id="container">
+    <div class="header">
+      <h1>Comments</h1>
+      <button id="darkModeToggle" class="dark-mode-toggle">
+        <i class="fas fa-moon"></i>
+      </button>
+    </div>
+    <div class="comment-controls">
+      <button id="sortComments" class="sort-button">
+        <i class="fas fa-sort"></i> Sort Comments
+      </button>
+    </div>
+    <div class="new-comment">
+      <img src="/images/2.png" alt="User Avatar" class="user-avatar">
+      <div class="comment-input-wrapper">
+        <textarea id="newCommentText" placeholder="Write a comment..."></textarea>
+        <button id="submitComment" class="submit-comment" disabled>
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+    <div id="commentsList"></div>
+  </div>
+  <div>
+    <button id="open">Open CommentSection</button>
+  </div>
+  <script src="sidepanel-tab.js"></script>
+</body>
+</html>
+

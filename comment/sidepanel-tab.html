@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+    }
+    #commentSection {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #newComment {
+      display: flex;
+      flex-direction: column;
+    }
+    #newComment textarea {
+      resize: none;
+      margin-bottom: 5px;
+    }
+    button {
+      align-self: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <h1>Comments</h1>
+  <div id="commentsList"></div>
+  <div id="newComment">
+    <textarea id="message" placeholder="Enter your comment here" rows="4"></textarea>
+    <button id="submitComment">Post Comment</button>
+  </div>
+  <script src="sidepanel-tab.js"></script>
+</body>
+</html>
