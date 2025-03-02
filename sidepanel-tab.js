@@ -1,30 +1,30 @@
-
 document.addEventListener('DOMContentLoaded', async () => {
     let activeTab;
     let hello;
     let pageid;
     let false_tab;
-    let data = JSON.parse(sessionStorage.getItem("userInfo"));
-    const acttabarr=[];
+    let user_data;
+    let currentPageUrl;
+    const acttabarr = [];
+    
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         activeTab = tabs[0];
         acttabarr.push(activeTab.id);
-        hello=activeTab.url;
+        hello = activeTab.url;
         fetchComments(hello);
     });
-   
+    
     chrome.tabs.onActivated.addListener((activeInfo) => {
         chrome.tabs.get(activeInfo.tabId, (tab) => {
             if (tab) {
                 if (tab.active) {
                     console.log("Tab switched to:", tab.url);
-                    if(acttabarr.includes(tab.id)){
+                    if (acttabarr.includes(tab.id)) {
                         fetchComments(tab.url);
                         document.getElementById("container").style.display = "block";
                         document.getElementById("open").style.display = "none";
-                    }
-                    else{
-                        false_tab=tab;
+                    } else {
+                        false_tab = tab;
                         document.getElementById("container").style.display = "none";
                         document.getElementById("open").style.display = "block";
 
@@ -34,21 +34,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                             path: 'sidepanel-tab.html' // Replace with your panel HTML file
                         });
                     }
-
                 }
             }
         });
     });
-    const new_butt=document.getElementById("open");
+
+    const new_butt = document.getElementById("open");
     new_butt.addEventListener('click', openComment);
+
     function openComment() {
         acttabarr.push(false_tab.id);
         fetchComments(false_tab.url);
         document.getElementById("container").style.display = "block";
         document.getElementById("open").style.display = "none";
     }
-
-
 
     const commentsList = document.getElementById('commentsList');
     const newCommentText = document.getElementById('newCommentText');
@@ -57,43 +56,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     const darkModeToggle = document.getElementById('darkModeToggle');
 
     let comments = [];
+    
+    function generateRandom8DigitNumber() {
+    	return Math.floor(10000000 + Math.random() * 90000000); 
+    }
 
-    function renderComments(commentsToRender) {
-        commentsList.innerHTML = ''; // Clear existing comments
-        commentsToRender.forEach(comment => {
-            const commentCard = document.createElement('div');
-            commentCard.classList.add('comment_container');
-            commentCard.innerHTML = `
-                <div class="comment_card">
-                    <div class="comment_header">
-                        <h3 class="comment_title">${comment.Username}</h3>
-                        <span class="comment_timestamp">6 hours ago</span>
+
+ function renderComments(commentsToRender) {
+    commentsList.innerHTML = ''; // Clear existing comments
+    commentsToRender.forEach(comment => {
+        const commentCard = document.createElement('div');
+        commentCard.classList.add('comment_container');
+        commentCard.innerHTML = `
+            <div class="comment_card">
+                <div class="comment_header" style="flex-direction: row;margin-bottom: 0.5rem;justify-content: space-between;">
+                    <div class="comment_user" style="display: flex;flex-direction: row;align-items: anchor-center;justify-content: start;">
+                        <!-- Profile Picture -->
+                        <img class="comment_user_image" src="${comment.profile_pic}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" alt="${comment.name}'s profile picture" />
+                        <h3 style="margin-left:9px;" class="comment_title">${comment.username}</h3>
                     </div>
-                    <p class="comment_content">${comment.Commentdata}</p>
-                    <div class="comment_footer">
-                        <div class="comment_actions">
-                            <button class="action-button like-button" data-comment-id="${comment.id}">
-                                <i class="fas fa-thumbs-up"></i> <span class="like-count">0</span>
-                            </button>
-                            <button class="action-button dislike-button" data-comment-id="${comment.id}">
-                                <i class="fas fa-thumbs-down"></i> <span class="dislike-count">0</span>
-                            </button>
-                            <span class="sentiment-score">
-                                ${getSentimentEmoji(comment.sentimentScore)} 
-                                ${comment.sentimentScore ? comment.sentimentScore.toFixed(2) : 'N/A'}
-                            </span>
-                        </div>
-                        <div class="show-replies" data-comment-id="${comment.id}">Replies (0)</div>
+                    <span class="comment_timestamp">${getTimeDifferenceFromNow(comment.created_at)}</span>
+                </div>
+                <p class="comment_content">${comment.comment}</p>
+                <div class="comment_footer">
+                    <div class="comment_actions">
+                        <button class="action-button like-button" data-comment-id="${comment.user_id}">
+                            <i class="fas fa-thumbs-up"></i> <span class="like-count">0</span>
+                        </button>
+                        <button class="action-button dislike-button" data-comment-id="${comment.user_id}">
+                            <i class="fas fa-thumbs-down"></i> <span class="dislike-count">0</span>
+                        </button>
+                        <span class="sentiment-score">
+                            ${getSentimentEmoji(comment.sentiment_score)} 
+                            ${comment.sentiment_score ? comment.sentiment_score.toFixed(2) : 'N/A'}
+                        </span>
                     </div>
+                    <div class="show-replies" data-comment-id="${comment.user_id}">Replies (0)</div>
                 </div>
-                <div class="nested-comments" id="replies-${comment.id}"></div>
-                <div class="reply-form">
-                    <input type="text" class="reply-input" placeholder="Write a reply...">
-                    <button class="reply-button" data-comment-id="${comment.id}">Reply</button>
-                </div>
-            `;
-            commentsList.appendChild(commentCard);
-        });
+            </div>
+            <div class="nested-comments" id="replies-${comment.user_id}"></div>
+            <div class="reply-form">
+                <input type="text" class="reply-input" placeholder="Write a reply...">
+                <button class="reply-button" data-comment-id="${comment.user_id}">Reply</button>
+            </div>
+        `;
+        commentsList.appendChild(commentCard);
+    });
+}
+
 
         // Add event listeners for likes, dislikes, and replies
         document.querySelectorAll('.like-button, .dislike-button').forEach(button => {
@@ -103,31 +113,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.querySelectorAll('.reply-button').forEach(button => {
             button.addEventListener('click', handleReply);
         });
+
         document.querySelectorAll('.show-replies').forEach(button => {
             button.addEventListener('click', showReply);
         });
-    }
+    
+
     function showReply(event) {
         const button = event.currentTarget;
         const commentId = button.dataset.commentId;
         const repliesContainer = document.getElementById(`replies-${commentId}`);
-    
-        
+
         if (repliesContainer.style.display === 'none' || !repliesContainer.style.display) {
             repliesContainer.style.display = 'block';
-
             fetchReplies(commentId, repliesContainer);
         } else {
             repliesContainer.style.display = 'none';
         }
     }
-    
+
     async function fetchReplies(commentId, container) {
         try {
             const response = await fetch(`http://localhost:8080/replies/${commentId}`);
             if (!response.ok) throw new Error('Failed to fetch replies');
             const repliesData = await response.json();
-    
+
             // Render replies
             container.innerHTML = '';
             repliesData.forEach(reply => {
@@ -156,18 +166,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error fetching replies:', error);
         }
     }
-    
-
-    function renderComments(commentsToRender) {
-        
 
     function getSentimentEmoji(score) {
         if (score === null || score === undefined) return '';
-        if (score ==5 ) return '😍';
-        if (score==4 ) return '😊';
-        if (score ==3) return '🙂';
-        if (score ==2) return '😐';
-        if (score ==1) return '🙁';
+        if (score == 5) return '😍';
+        if (score == 4) return '😊';
+        if (score == 3) return '🙂';
+        if (score == 2) return '😐';
+        if (score == 1) return '🙁';
         return '😢';
     }
 
@@ -244,39 +250,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function fetchComments(url) {
         try {
             cleaned_url = url.replace("https://", "")
-            const currentPageUrl = await encodeURIComponent(cleaned_url); 
+            currentPageUrl = await encodeURIComponent(cleaned_url); 
             console.log(currentPageUrl);
 
             const response2 = await fetch(`http://localhost:8080/comments?url=${encodeURIComponent(currentPageUrl)}`);
             if (!response2.ok) throw new Error('Failed to fetch comments');
             const commentsData = await response2.json();
             console.log(commentsData);
-        
-            comments = commentsData.newest_comments;
-            console.log(comments);
-            renderComments(comments);
+            renderComments(commentsData);
         } catch (error) {
             console.error('Error fetching comments:', error);
         }
-        
-         
-        
     }
+function getTimeDifferenceFromNow(backendTime) {
+    // Get the current time in UTC
+    const currentTime = new Date();
+
+    // Parse the backend time (which is already in UTC) into a Date object
+    const backendDate = new Date(backendTime);
+
+    // Get the difference in milliseconds between current time and backend time
+    const diffInMilliseconds = currentTime - backendDate;
+
+    // Convert milliseconds to various units
+    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    // Create a human-readable format
+    let result = '';
+    if (diffInDays > 0) {
+        result = `${diffInDays}d ago`;
+    } else if (diffInHours > 0) {
+        result = `${diffInHours}hr ago`;
+    } else if (diffInMinutes > 0) {
+        result = `${diffInMinutes}min ago`;
+    } else {
+        result = `${diffInSeconds}s ago`;
+    }
+
+    return result;
+}
+
+
 
     // Handle posting a new comment
     submitComment.addEventListener('click', async () => {
+    	chrome.storage.sync.get("userInfo", async (data) => {
+        console.log(data.userInfo); 
+        user_data=data.userInfo;
+        });
+        const id=generateRandom8DigitNumber();
         const message = newCommentText.value.trim();
-        const commentData={
+        const commentData = {
             comment: message,
-            Username:data.username,
-            user_id: Date.now(),  
-            url: hello,
-            parent_id: 123,
+            username: user_data.name,
+            user_id: id,
+            url: currentPageUrl,
+            parent_id: null,
             sentiment_score: 2,
             LikeCount: 0,
-	        DislikeCount:0,
-            ProfilePic:data.picture,
-        }
+            DislikeCount: 0,
+            profile_pic: user_data.picture,
+            created_at: new Date(),
+        };
         console.log(commentData);
 
         if (message === '') {
@@ -284,19 +322,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // const username = 'User';  Replace this with actual username logic
-
        /* try {
             const sentimentResponse = await fetch("http://localhost:5000/api/sentiment", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ comment:message })
+                body: JSON.stringify({ comment: message })
             });*/
 
-            //if (sentimentResponse.ok) {
-                const sentimentData = await sentimentResponse.json();
+         //   if (sentimentResponse.ok) {
+            //    const sentimentData = await sentimentResponse.json();
                 comments.unshift(commentData);
                 renderComments(comments);
 
@@ -306,16 +342,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         headers: {
                             "Content-Type": "application/json"
                         },
-                        body: JSON.stringify({ commentData })
+                        body: JSON.stringify(commentData),
+                        mode:'no-cors'
                     });
-
-                commentData.value = ''; // Clear the input field
+                    commentData.value = ''; // Clear the input field
+                } catch (error) {
+                    console.error('Error posting comment:', error);
+                }
            // } else {
-                //console.error('Failed to analyze sentiment');
-            //}
-        } catch (error) {
-            console.error('Error posting comment:', error);
-        }
+            //    console.error('Failed to analyze sentiment');
+           // }
+      //  } catch (error) {
+        //    console.error('Error posting comment:', error);
+       // }
     });
 
     // Sort comments
@@ -338,8 +377,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial fetch of comments
     fetchComments();
-    
-
-
 });
 
