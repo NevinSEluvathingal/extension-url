@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Open Comment Section with OAuth",
+  "name": "Comment-Nation",
   "version": "1.0",
   "description": "An extension to open a comment section on the current tab with Google login.",
   "minimum_chrome_version": "116",
